@@ -42,13 +42,27 @@ import com.example.notes.navigation.SetupNavigation
 import com.example.notes.ui.theme.NotesTheme
 import com.example.notes.ui.viewmodels.SharedViewModel
 import com.example.notes.utils.GlobalVariable
+import com.example.notes.worker.Androidaudiorecorder
+import com.example.notes.worker.playback.AndroidAudioPlayer
 import dagger.hilt.android.AndroidEntryPoint
+import java.io.File
 
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private lateinit var navController: NavHostController
     private lateinit var sharedViewModel: SharedViewModel
+    private val recorder by lazy {
+        Androidaudiorecorder(applicationContext)
+    }
+
+    private val player by lazy {
+        AndroidAudioPlayer(applicationContext)
+    }
+
+    private var audioFile: File? = null
+
+
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,6 +84,39 @@ class MainActivity : ComponentActivity() {
             NotesTheme {
                 navController = rememberNavController()
                 SetupNavigation(navController = navController, sharedViewModel = sharedViewModel)
+
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Button(onClick = {
+                        File(cacheDir, "audio.mp3").also {
+                            recorder.start(it)
+                            audioFile = it
+                        }
+                    }) {
+                        Text(text = "Start recording")
+                    }
+                    Button(onClick = {
+                        recorder.stop()
+                    }) {
+                        Text(text = "Stop recording")
+                    }
+                    Button(onClick = {
+                        player.playFile(audioFile ?: return@Button)
+                    }) {
+                        Text(text = "Play")
+                    }
+                    Button(onClick = {
+                        player.stop()
+                    }) {
+                        Text(text = "Stop playing")
+                    }
+                }
+
+
+
             }
         }
     }
@@ -87,6 +134,8 @@ class MainActivity : ComponentActivity() {
             POST_NOTIFICATIONS
         )
     }
+
+
 }
 
 
